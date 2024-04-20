@@ -5,20 +5,35 @@
 #include <pty.h>
 #include <termios.h>
 #include <signal.h>
+#include <strings.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
 #include "include/tty.h"
 
-int fd;
+sig_atomic_t fd;
+int child_pid;
 
 void err(char * str) {
-    printf("%s\n", str);
+    perror(str);
     exit(1);
+}
+
+void trap(int sig, __sighandler_t handler) {
+    struct sigaction act;
+    bzero(&act, sizeof(act));
+    act.sa_handler = handler;
+    sigaction(sig, &act, NULL);
 }
 
 void sigint(int sig) {
     write(fd, "stop", 4);
+}
+
+void sigwinch(int sig) {
+    struct winsize size;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &size);
+    ioctl(fd, TIOCSWINSZ, (char *) &size);
 }
 
 void io_handler(int pty) {
@@ -28,44 +43,41 @@ void io_handler(int pty) {
     int n;
     char buf[512];
     if (pid == 0) {
+
+        trap(SIGINT, sigint);
+        trap(SIGWINCH, sigwinch);
+
         for (;;) {
-            if ((n = read(STDIN_FILENO, buf, sizeof(buf))) < 0)
-                err("Read error from stdin.");
-            if (write(pty, buf, n) != n)
-                err("Writen error to master pty.");
+            n = read(STDIN_FILENO, buf, sizeof(buf));
+            if (write(pty, buf, n) != n) err("Writen error to master pty.");
         }
     }
 
     for (;;) {
-        if ((n = read(pty, buf, sizeof(buf))) <= 0)
-            break; /* signal caught, error, or EOF */
-        if (write(STDOUT_FILENO, buf, n) != n)
-            err("Writen error to stdout.");
+        if ((n = read(pty, buf, sizeof(buf))) <= 0) break;
+        if (write(STDOUT_FILENO, buf, n) != n) err("Writen error to stdout.");
     }
 
     kill(pid, SIGKILL);
 }
 
 int main(int argc, char *argv[]) {
-    int pid;
-    struct termios orig_termios;
     struct winsize size;
+    struct termios orig_termios;
 
     if (isatty(STDIN_FILENO)) {
         tcgetattr(STDIN_FILENO, &orig_termios);
         ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &size);
-        pid = forkpty(&fd, NULL, &orig_termios, &size);
+        child_pid = forkpty(&fd, NULL, &orig_termios, &size);
     } else {
-        pid = forkpty(&fd, NULL, NULL, NULL);
+        child_pid = forkpty(&fd, NULL, NULL, NULL);
     }
 
-    if (pid < 0) err("Failed to create child process.");
-    if (pid == 0) {
+    if (child_pid < 0) err("Failed to create child process.");
+    if (child_pid == 0) {
         execvp(argv[1], argv + 2);
         err("Failed to run command.");
     }
-
-    signal(SIGINT, sigint);
 
     tty_raw(STDIN_FILENO);
     atexit(tty_atexit);
