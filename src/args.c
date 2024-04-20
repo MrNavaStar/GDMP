@@ -1,21 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <signal.h>
 
-typedef struct signal {
-    int sig;
-    int block;
-    int mode;
-    char *raw;
-} Signal;
+#include "include/args.h"
 
 int get_type(char *str) {
     if (str[0] == '-' && str[1] == '-') return 0;
     if (strcmp(str, "-x") == 0) return 1;
     if (strcmp(str, "-w") == 0) return 2;
     if (strcmp(str, "-s") == 0) return 3;
-    if (str[0] == '-') return 4; //TODO: Improve checking for bad args here
+    if (strchr("abcdefghijklmnopqrstuvwxyz./[{`\"", str[0]) == NULL) return 4;
     return 5;
 }
 
@@ -57,15 +53,14 @@ int get_sig(char *str) {
     exit(1);
 }
 
-void parse_args(int argc, char *argv[]) {
-    Signal finished[30];
-    Signal current[30];
+int parse_args(int argc, char *argv[], Signal signals[32]) {
+    bzero(signals, 32);
+    Signal current[32];
     int c = 0;
-    int f = 0;
+    int cmd_offset = 0;
 
-    for (int i = 1; i < argc; i++) {
+    for (int i = 1; i < argc && cmd_offset == 0; i++) {
         char *arg = argv[i];
-
         int type = get_type(arg);
         switch (type) {
             case 0:
@@ -84,24 +79,24 @@ void parse_args(int argc, char *argv[]) {
                 i++;
                 for (int j = 0; j < c; j++) {
                     current[j].mode = type;
-                    current[j].raw = argv[i];
-                    if (current[j].raw[0] == '-') {
-                        printf("Invalid Arg: %s\n", current[j].raw);
+                    current[j].text = argv[i];
+                    if (current[j].text[0] == '-') {
+                        printf("Invalid Arg: %s\n", current[j].text);
                         exit(1);
                     }
-                    finished[f] = current[j];
-                    f++;
+                    signals[current[j].sig] = current[j];
                 }
                 c = 0;
                 break;
             case 4:
                 printf("Invalid Arg: %s\n", arg);
                 exit(1);
+            case 5:
+                cmd_offset = i;
         }
     }
 
-    for (int i = 0; i < c; i++) {
-        finished[f] = current[i];
-        f++;
-    }
+    for (int i = 0; i < c; i++)
+        signals[current[i].sig] = current[i];
+    return cmd_offset;
 }
