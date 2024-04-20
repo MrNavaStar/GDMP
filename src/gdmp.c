@@ -40,6 +40,9 @@ void io_handler(int pty) {
     int n;
     char buf[512];
     if (pid == 0) {
+        // SIGWINCH needs to be registered by default for resizing to work
+        trap(SIGWINCH, sig_handler);
+
         for (int i = 0; i < 32; i++)
             if (signals[i].sig) trap(signals[i].sig, sig_handler);
 
