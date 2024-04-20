@@ -1,30 +1,18 @@
 #define _POSIX_SOURCE
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <pty.h>
 #include <termios.h>
 #include <signal.h>
-#include <strings.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
+#include "include/util.h"
+#include "include/args.h"
 #include "include/tty.h"
 
 sig_atomic_t fd;
 int child_pid;
-
-void err(char * str) {
-    perror(str);
-    exit(1);
-}
-
-void trap(int sig, __sighandler_t handler) {
-    struct sigaction act;
-    bzero(&act, sizeof(act));
-    act.sa_handler = handler;
-    sigaction(sig, &act, NULL);
-}
 
 void sigint(int sig) {
     write(fd, "stop", 4);
@@ -62,7 +50,9 @@ void io_handler(int pty) {
 }
 
 int main(int argc, char *argv[]) {
-    struct winsize size;
+    parse_args(argc, argv);
+
+    /*struct winsize size;
     struct termios orig_termios;
 
     if (isatty(STDIN_FILENO)) {
@@ -82,5 +72,5 @@ int main(int argc, char *argv[]) {
     tty_raw(STDIN_FILENO);
     atexit(tty_atexit);
 
-    io_handler(fd);
+    io_handler(fd);*/
 }
