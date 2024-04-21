@@ -1,4 +1,5 @@
 #define _POSIX_SOURCE
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -25,7 +26,7 @@ void sig_handler(int sig) {
             ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &size);
             ioctl(fd, TIOCSWINSZ, (char *) &size);
         }
-        else kill(child_pid, sig);
+        //else kill(child_pid, sig);
     }
     if (signal.mode == 2) write(fd, signal.text, strlen(signal.text));
     else if (signal.mode == 3) {
@@ -43,8 +44,12 @@ void io_handler(int pty) {
         // SIGWINCH needs to be registered by default for resizing to work
         trap(SIGWINCH, sig_handler);
 
-        for (int i = 0; i < 32; i++)
-            if (signals[i].sig) trap(signals[i].sig, sig_handler);
+        for (int i = 0; i < 32; i++) {
+            if (signals[i].sig) {
+                printf("PAIN: %d", signals[i].sig);
+                trap(signals[i].sig, sig_handler);
+            }
+        }
 
         for (;;) {
             n = read(STDIN_FILENO, buf, sizeof(buf));
