@@ -1,5 +1,4 @@
 #define _POSIX_SOURCE
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -54,13 +53,13 @@ void io_handler(int pty) {
         sigprocmask(SIG_BLOCK, &mask, NULL);
 
         for (;;) {
-            n = read(STDIN_FILENO, buf, sizeof(buf));
-            if (write(pty, buf, n) != n) err("Writen error to master pty.");
+            n = read(STDIN_FILENO, buf, 1);
+            int sig = get_sig_from_code(buf[0]);
+            if (sig != 0) sig_handler(sig);
+            else if (write(pty, buf, n) != n) err("Writen error to master pty.");
         }
     }
 
-    // SIGWINCH needs to be registered by default for resizing to work
-    trap(SIGWINCH, sig_handler);
     for (int i = 0; i < 31; i++)
         if (signals[i].sig) trap(signals[i].sig, sig_handler);
 

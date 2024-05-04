@@ -59,6 +59,9 @@ int parse_args(int argc, char *argv[], Signal signals[31]) {
     int c = 0;
     int cmd_offset = 0;
 
+    // SIGWINCH needs to be registered by default for resizing to work
+    signals[27].sig = SIGWINCH;
+
     for (int i = 1; i < argc && cmd_offset == 0; i++) {
         char *arg = argv[i];
         int type = get_type(arg);
@@ -66,8 +69,6 @@ int parse_args(int argc, char *argv[], Signal signals[31]) {
             case 0:
                 Signal signal;
                 signal.sig = get_sig(arg + 2);
-                signal.block = 0;
-                signal.mode = 0;
                 current[c] = signal;
                 c++;
                 break;
@@ -99,4 +100,13 @@ int parse_args(int argc, char *argv[], Signal signals[31]) {
     for (int i = 0; i < c; i++)
         signals[current[i].sig - 1] = current[i];
     return cmd_offset;
+}
+
+int get_sig_from_code(char code) {
+    switch (code) {
+        case '\3':
+            return SIGINT;
+        default:
+            return 0;
+    }
 }
