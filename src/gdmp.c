@@ -27,7 +27,16 @@ static void sig_handler(int sig) {
             ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &size);
             ioctl(fd, TIOCSWINSZ, (char *) &size);
         }
-        else kill(child_pid, sig);
+
+        // TODO: Make signal forwarding actually work
+        else {
+            #ifdef TIOCSIGNAL
+            ioctl(fd, TIOCSIGNAL, sig);
+            #endif
+            #ifdef TIOCSIG
+            ioctl(fd, TIOCSIG, sig);
+            #endif
+        }
     }
     if (signal.mode == 2) {
         write(fd, signal.text, strlen(signal.text));
@@ -89,11 +98,6 @@ int main(int argc, char *argv[]) {
 
     if (child_pid < 0) err("Failed to create child process.");
     if (child_pid == 0) {
-
-        /*sigset_t mask;
-        sigfillset(&mask);
-        sigprocmask(SIG_BLOCK, &mask, NULL);*/
-
         execvp(argv[cmd_offset], argv + cmd_offset);
         err("Failed to run command.");
     }
