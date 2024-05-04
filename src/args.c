@@ -53,9 +53,9 @@ int get_sig(char *str) {
     exit(1);
 }
 
-int parse_args(int argc, char *argv[], Signal signals[32]) {
-    bzero(signals, 32);
-    Signal current[32];
+int parse_args(int argc, char *argv[], Signal signals[31]) {
+    bzero(signals, 31);
+    Signal current[31];
     int c = 0;
     int cmd_offset = 0;
 
@@ -84,7 +84,7 @@ int parse_args(int argc, char *argv[], Signal signals[32]) {
                         printf("Invalid Arg: %s\n", current[j].text);
                         exit(1);
                     }
-                    signals[current[j].sig] = current[j];
+                    signals[current[j].sig - 1] = current[j];
                 }
                 c = 0;
                 break;
@@ -97,6 +97,6 @@ int parse_args(int argc, char *argv[], Signal signals[32]) {
     }
 
     for (int i = 0; i < c; i++)
-        signals[current[i].sig] = current[i];
+        signals[current[i].sig - 1] = current[i];
     return cmd_offset;
 }

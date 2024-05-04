@@ -5,4 +5,4 @@ typedef struct signal {
     char *text;
 } Signal;
 
-int parse_args(int argc, char *argv[], Signal signals[32]);
+int parse_args(int argc, char *argv[], Signal signals[31]);

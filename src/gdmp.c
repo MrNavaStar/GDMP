@@ -8,17 +8,19 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 
 #include "include/util.h"
 #include "include/args.h"
 #include "include/tty.h"
 
-sig_atomic_t fd;
+int fd;
 int child_pid;
-Signal signals[32];
+Signal signals[31];
 
-void sig_handler(int sig) {
-    Signal signal = signals[sig];
+static void sig_handler(int sig) {
+    trap(sig, sig_handler);
+    Signal signal = signals[sig - 1];
 
     if (!signal.block) {
         if (sig == SIGWINCH) {
@@ -26,30 +28,30 @@ void sig_handler(int sig) {
             ioctl(STDIN_FILENO, TIOCGWINSZ, (char *) &size);
             ioctl(fd, TIOCSWINSZ, (char *) &size);
         }
-        //else kill(child_pid, sig);
+        else kill(child_pid, sig);
     }
-    if (signal.mode == 2) write(fd, signal.text, strlen(signal.text));
-    else if (signal.mode == 3) {
+    if (signal.mode == 2) {
+        write(fd, signal.text, strlen(signal.text));
+        write(fd, "\n", 1);
+    }
+
+    /*else if (signal.mode == 3) {
         //TODO: Run text as bash script
-    }
+    }*/
 }
 
 void io_handler(int pty) {
-    pid_t pid = fork();
-    if (pid < 0) err("Failed to create io process.");
+    pid_t reader_pid = fork();
+    if (reader_pid < 0) err("Failed to create io process.");
 
     int n;
     char buf[512];
-    if (pid == 0) {
-        // SIGWINCH needs to be registered by default for resizing to work
-        trap(SIGWINCH, sig_handler);
+    if (reader_pid == 0) {
 
-        for (int i = 0; i < 32; i++) {
-            if (signals[i].sig) {
-                printf("PAIN: %d", signals[i].sig);
-                trap(signals[i].sig, sig_handler);
-            }
-        }
+        // Block all signals on this process
+        sigset_t mask;
+        sigfillset(&mask);
+        sigprocmask(SIG_BLOCK, &mask, NULL);
 
         for (;;) {
             n = read(STDIN_FILENO, buf, sizeof(buf));
@@ -57,16 +59,23 @@ void io_handler(int pty) {
         }
     }
 
-    for (;;) {
-        if ((n = read(pty, buf, sizeof(buf))) <= 0) break;
+    // SIGWINCH needs to be registered by default for resizing to work
+    trap(SIGWINCH, sig_handler);
+    for (int i = 0; i < 31; i++)
+        if (signals[i].sig) trap(signals[i].sig, sig_handler);
+
+    while (waitpid(child_pid, NULL, WNOHANG) == 0) {
+        if ((n = read(pty, buf, sizeof(buf))) <= 0) continue;
         if (write(STDOUT_FILENO, buf, n) != n) err("Writen error to stdout.");
     }
 
-    kill(pid, SIGKILL);
+    kill(reader_pid, SIGKILL);
 }
 
 int main(int argc, char *argv[]) {
+    if (argc < 2) return 0;
     int cmd_offset = parse_args(argc, argv, signals);
+    if (cmd_offset == 0) return 0;
 
     struct winsize size;
     struct termios orig_termios;
@@ -81,12 +90,17 @@ int main(int argc, char *argv[]) {
 
     if (child_pid < 0) err("Failed to create child process.");
     if (child_pid == 0) {
+
+        /*sigset_t mask;
+        sigfillset(&mask);
+        sigprocmask(SIG_BLOCK, &mask, NULL);*/
+
         execvp(argv[cmd_offset], argv + cmd_offset);
         err("Failed to run command.");
     }
 
     tty_raw(STDIN_FILENO);
     atexit(tty_atexit);
-
     io_handler(fd);
+    return 0;
 }
