@@ -66,17 +66,18 @@ int parse_args(int argc, char *argv[], Signal signals[31]) {
         char *arg = argv[i];
         int type = get_type(arg);
         switch (type) {
-            case 0:
-                Signal signal;
-                signal.sig = get_sig(arg + 2);
+            case 0: {
+                Signal signal = {get_sig(arg + 2)};
                 current[c] = signal;
                 c++;
                 break;
-            case 1:
+            }
+            case 1: {
                 for (int j = 0; j < c; j++) current[j].block = 1;
                 break;
+            }
             case 2:
-            case 3:
+            case 3: {
                 i++;
                 for (int j = 0; j < c; j++) {
                     current[j].mode = type;
@@ -89,11 +90,14 @@ int parse_args(int argc, char *argv[], Signal signals[31]) {
                 }
                 c = 0;
                 break;
-            case 4:
+            }
+            case 4: {
                 printf("Invalid Arg: %s\n", arg);
                 exit(1);
-            case 5:
+            }
+            case 5: {
                 cmd_offset = i;
+            }
         }
     }
 

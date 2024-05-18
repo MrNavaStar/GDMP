@@ -1,4 +1,4 @@
-typedef struct signal {
+typedef struct {
     int sig;
     int block;
     int mode;

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -std=c2x
+CFLAGS=-Wall -std=c99
 
 SRC = $(wildcard src/*.c src/include/*.h)
 
