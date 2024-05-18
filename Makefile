@@ -7,6 +7,7 @@ all: gdmp
 
 gdmp: $(SRC)
 	$(CC) -o $@ $(CFLAGS) $^
+	./tools/polyfill --target-glibc=2.2.5 gdmp || make clean
 
 install: gdmp
 	cp gdmp /usr/local/bin
