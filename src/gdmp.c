@@ -69,8 +69,7 @@ void io_handler(int pty) {
         }
     }
 
-    for (int i = 0; i < 31; i++)
-        if (signals[i].sig) trap(signals[i].sig, sig_handler);
+    for (int i = 1; i < 32; i++) trap(i, sig_handler);
 
     while (waitpid(child_pid, NULL, WNOHANG) == 0) {
         if ((n = read(pty, buf, sizeof(buf))) <= 0) continue;

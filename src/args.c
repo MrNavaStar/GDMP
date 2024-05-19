@@ -59,9 +59,6 @@ int parse_args(int argc, char *argv[], Signal signals[31]) {
     int c = 0;
     int cmd_offset = 0;
 
-    // SIGWINCH needs to be registered by default for resizing to work
-    signals[27].sig = SIGWINCH;
-
     for (int i = 1; i < argc && cmd_offset == 0; i++) {
         char *arg = argv[i];
         int type = get_type(arg);
