@@ -40,6 +40,7 @@ You can download a prebuilt binary from the [releases page](https://github.com/M
 To compile the program for yourself you can run:
 ```bash
 git clone https://github.com/MrNavaStar/GDMP.git
+cd GDMP
 sudo make install
 ```
 The program is a signal binary and will be installed to /usr/local/bin. The make file also provides `make uninstall` to remove the program for you.
