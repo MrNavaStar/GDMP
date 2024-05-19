@@ -1,8 +1,8 @@
-# GDMP
-
 <img src="https://github.com/MrNavaStar/GDMP/blob/master/gdmp.png?raw=true" width="100%">
 
-GDMP (Get Down Mr President) is an easy to use signal/io filtering application for unix! It can be run in conjuction with any other command.
+# GDMP
+
+Get Down Mr President is an easy to use signal/io filtering application for unix! It can be run in conjuction with any other command.
 
 # Usage
 
