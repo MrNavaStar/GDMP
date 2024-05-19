@@ -25,7 +25,8 @@ gdmp -int -x -w "hello program!" my_prog --my-prog-flags/args
 ```
 You also run a bash command when a signal is captured.
 ```bash
-gdmp -int -w -s "echo 'hello!'" my_prog --my-prog-flags/args
+# Run "echo 'hello!'" on SIGINT or ctrl+c
+gdmp -int -x -s "echo 'hello!'" my_prog --my-prog-flags/args
 ```
 
 Signal chaining can be used to apply modifiers to signals in bulk:
