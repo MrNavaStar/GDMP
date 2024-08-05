@@ -11,7 +11,6 @@ You can catch most unix signals sent to an application, excluding only special s
 A signal can be listened for by passing the name of the signal (excluding the sigpart):
 ```bash
 # listen for SIGINT or ctr+c
-gdmp -int my_prog --my-prog-flags/args
 ```
 You can block a signal from reaching the program by passing -x after the signal name.
 ```bash
