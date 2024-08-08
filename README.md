@@ -11,26 +11,27 @@ You can catch most unix signals sent to an application, excluding only special s
 A signal can be listened for by passing the name of the signal (excluding the sigpart):
 ```bash
 # listen for SIGINT or ctr+c
+gdmp --int my_prog --my-prog-flags/args
 ```
 You can block a signal from reaching the program by passing -x after the signal name.
 ```bash
 # Block SIGINT or ctrl+c
-gdmp -int -x my_prog --my-prog-flags/args
+gdmp --int -x my_prog --my-prog-flags/args
 ```
 You can write to a programs stdin when a signal is captured. This works regaurdless if the signal is blocked or not.
 ```bash
 # Write "hello program!" to stdin on SIGINT or ctrl+c
-gdmp -int -x -w "hello program!" my_prog --my-prog-flags/args
+gdmp --int -x -w "hello program!" my_prog --my-prog-flags/args
 ```
 You also run a bash command when a signal is captured.
 ```bash
-gdmp -int -w -s "echo 'hello!'" my_prog --my-prog-flags/args
+gdmp --int -w -s "echo 'hello!'" my_prog --my-prog-flags/args
 ```
 
 Signal chaining can be used to apply modifiers to signals in bulk:
 ```bash
 # Block SIGINT, SIGTERM, SIGHUP and write "wow!" to stdin on SIGUSR1 or SIGUSR2.
-gdmp -int -term -hup -x -usr1 -usr2 -w "wow!" my_prog --my-prog-flags/args
+gdmp --int --term --hup -x --usr1 --usr2 -w "wow!" my_prog --my-prog-flags/args
 ```
 
 # Compiling and installing
